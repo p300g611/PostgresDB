@@ -56,11 +56,7 @@ SELECT DISTINCT
        testlet.gradecourse,
        testlet.externalid as testletexternalid,
        testlet.testletname,
-       roster.statecourses,
-	   roster.statesubjectarea subjectenrolled,
-	   studentstests.rosteridtested,  
-	   studentstests.teacheridtested, 
-	   studentstests.rostertested
+       roster.statecourses
        FROM student
 				   LEFT JOIN enrollmentsrosters ON (enrollmentsrosters.enrollmentid = student.enrollmentid)
 				   LEFT JOIN roster ON (roster.id = enrollmentsrosters.rosterid)
@@ -80,7 +76,7 @@ SELECT DISTINCT
        WHERE student.state NOT IN ('flatland', 'DLM QC State', 'AMP QC State', 'KAP QC State', 'Playground QC State', 'Flatland',
                                     'DLM QC YE State', 'DLM QC IM State', 'DLM QC IM State ', 'DLM QC EOY State','Service Desk QC State','NY Training State','QA QC State')
 							   AND student.activeflag = 1
-							   AND ((student.activeenrollmentflag=1 AND enrollmentsrosters.activeflag =1 AND roster.activeflag = 1 AND student.activeassessmentflag=1)
+							   AND ((student.activeenrollmentflag=1 AND enrollmentsrosters.activeflag =1 AND roster.activeflag = 1)
 							          OR studentstests.teststatus ='complete'
 							        )
 							   AND ( (roster.id is null and studentstests.id is null) OR 

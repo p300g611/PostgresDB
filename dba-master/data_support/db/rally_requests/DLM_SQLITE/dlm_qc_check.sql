@@ -73,7 +73,4 @@ having count(distinct educatorstateid)>1;
 --duplicate tests
 --https://code.cete.us/svn/dlm/aart/trunk/aart-web-dependencies/data_support/db/rally_requests/2018_org_changes/DLM_fieldtest_duplicates.sql
 
---3)Validation Missing edcuator 
-select ec.studentid,edu.id from educators edu
-left outer join enrollmentcontentarea ec on ec.educatorid=edu.id
-where edu.id is null;
+

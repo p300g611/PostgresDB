@@ -51,7 +51,7 @@ select 'Facilitators';
 --update tmp_state_roles set school_year= (select organization_school_year(o.id))
  --from organization o where o.displayidentifier=tmp_state_roles.state;
 
-update tmp_state_roles set school_year= 2019;
+update tmp_state_roles set school_year= 2018;
 
 with dlm_user as ( 
 select a.id aartuserid,a.email --into temp tmp_process_user
@@ -65,7 +65,7 @@ into temp tmp_process_user
 from
 (select aartuserid,email,courses  from dlm_user 
 cross join tmp_courses) dlm
-left outer join moodleupload up on up.aartuserid=dlm.aartuserid and up.course=dlm.courses and up.schoolyear=2019 --and up.email=dlm.email
+left outer join moodleupload up on up.aartuserid=dlm.aartuserid and up.course=dlm.courses and up.schoolyear=2018 --and up.email=dlm.email
 where up.aartuserid is null;
 
 WITH user_list AS 
@@ -73,10 +73,10 @@ WITH user_list AS
 	       row_number() over(partition by a.aartuserid order by uo.id) row_num,
 	       Schoolname,
 	       DistrictName,
-	       tmp.state||' - '|| case when tmp.course='Test Admin' then 'Test Admin - 2019'
-	                               when tmp.course='Facilitators' then 'Facilitators - 2019'
-	                               when upper(cast(cmp.Rtcomplete as char(1)))='Y' then 'Returning - 2019'
-	                                    else 'New - 2019' end course     
+	       tmp.state||' - '|| case when tmp.course='Test Admin' then 'Test Admin - 2018'
+	                               when tmp.course='Facilitators' then 'Facilitators - 2018'
+	                               when upper(cast(cmp.Rtcomplete as char(1)))='Y' then 'Returning - 2018'
+	                                    else 'New - 2018' end course     
 	   from tmp_process_user a
 	    inner join usersorganizations uo on a.aartuserid=uo.aartuserid
 	    inner join userorganizationsgroups uog on uog.userorganizationid=uo.id
@@ -119,7 +119,7 @@ WITH user_list AS
 --\COPY (select * from tmp_upload_moodle) to 'tmp_upload_moodle.csv' DELIMITER ',' CSV HEADER;
 insert into moodleupload(aartuserid,schoolyear,email,course,createddate,createduser,modifieddate,modifieduser,usertrainingtype)
 select IdNumber aartuserid,
-       2019 schoolyear,
+       2018 schoolyear,
        Email email,
        case when Course1 ilike  '%Facilitators%' then 'Facilitators' 
             else 'NewReturning' end course,

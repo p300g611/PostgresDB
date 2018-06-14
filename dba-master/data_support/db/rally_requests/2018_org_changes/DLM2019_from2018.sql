@@ -123,7 +123,7 @@ inner join studentassessmentprogram sap on sap.studentid=e.studentid
 inner join assessmentprogram ap on ap.id=sap.assessmentprogramid
 inner join gradecourse gc on e.currentgradelevel=gc.id
 where ot.statedisplayidentifier in ('IA','WI','MD','NY','DE','OK','KS')  and ap.abbreviatedname='DLM' and e.currentschoolyear in (2018,2019)
-and sap.activeflag is true and case when e.currentschoolyear =2018 then  gc.abbreviatedname in ('3','4','5','6','7','8','9','10') else gc.abbreviatedname in ('3','4','5','6','7','8','10','11') end
+and sap.activeflag is true and case when e.currentschoolyear =2018 then  gc.abbreviatedname in ('3','4','5','6','7','8','9','10') else gc.abbreviatedname in ('3','4','5','6','7','8','9','10','11') end
 and not exists (select 1 from enrollment enrl where enrl.studentid=e.studentid and enrl.currentschoolyear=2019 and enrl.notes not like '%#$2019$#%')
 group by e.currentschoolyear;
 
@@ -196,7 +196,7 @@ select      distinct
 				 when stateid =9633   and districtname='Des Moines Independent Comm School District'   and gc.abbreviatedname='3' then e.currentgradelevel
 				 when stateid =82933  then e.currentgradelevel 
 				 when stateid =69352  and districtname='ALBANY CITY SD' and gc.abbreviatedname='3' then e.currentgradelevel 
-				 when stateid =69352  and gc.abbreviatedname='9' then 31
+				 when stateid =69352  and gc.abbreviatedname='9' then 31 --Grade 9
 				 when stateid =9631   and districtname='Milwaukee School District' and gc.abbreviatedname='3' then e.currentgradelevel
                  else gc_new.id       end currentgradelevel, 
             e.localstudentidentifier,

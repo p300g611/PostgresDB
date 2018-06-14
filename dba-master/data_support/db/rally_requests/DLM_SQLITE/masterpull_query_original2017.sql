@@ -78,10 +78,6 @@ SELECT DISTINCT
 	        else 'Spring' end as window, 
 	   case when studentstests.windowid in (10269,10287,10296,10271,10285,10294,10273,10275,10277,10292,10279,10283,10281,10289,10260,10263,10265,10267) then 'Fieldtest' 
 	     else 'Operational' end  as pool,
-	   roster.statesubjectarea subjectenrolled,
-	   studentstests.rosteridtested,  
-	   studentstests.teacheridtested, 
-	   studentstests.rostertested,
 	   studentsresponses.readableresponse,	 
 	   studentsresponses.responsetext	 
        FROM student
@@ -107,7 +103,7 @@ SELECT DISTINCT
        WHERE student.state NOT IN ('flatland', 'DLM QC State', 'AMP QC State', 'KAP QC State', 'Playground QC State', 'Flatland',
                                     'DLM QC YE State', 'DLM QC IM State', 'DLM QC IM State ', 'DLM QC EOY State','Service Desk QC State','NY Training State','QA QC State')
 			   AND student.activeflag = 1
-			   AND ((student.activeenrollmentflag=1 AND enrollmentsrosters.activeflag = 1 AND roster.activeflag = 1 AND student.activeassessmentflag=1)
+			   AND ((student.activeenrollmentflag=1 AND enrollmentsrosters.activeflag = 1 AND roster.activeflag = 1)
 				  OR studentstests.teststatus IN ('complete')
 				)
 			   AND ( (roster.id is null and studentstests.id is null)  

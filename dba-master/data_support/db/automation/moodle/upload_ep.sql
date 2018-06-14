@@ -46,7 +46,7 @@ DECLARE
 BEGIN
 	 now_date :=now();
 	 record_cnt:=1;
-	 school_year:=2019;
+	 school_year:=2018;
 	 SELECT INTO ceteSysAdminUserId (SELECT id FROM aartuser WHERE username='cetesysadmin' and activeflag is true);
 
 FOR tmp_table IN (SELECT idnumber,case when cast(upper(COALESCE(RTComplete,'N')) as char(1)) = 'Y' then 'Y' else 'N' end RTComplete,RTCompleteDate,row_num,error_msg FROM tmp_user_training)
@@ -90,7 +90,7 @@ FOR tmp_table IN (SELECT idnumber,case when cast(upper(COALESCE(RTComplete,'N'))
 	       INSERT INTO userpdtrainingdetail(
                 userid, trainingcompleted, trainingcompletiondate, currentschoolyear, 
                 createduser, createddate, modifieduser, modifieddate)
-               SELECT  aartuser_id,'true', RTCompleteDate_cdt,2019, 
+               SELECT  aartuser_id,'true', RTCompleteDate_cdt,2018, 
                       ceteSysAdminUserId, now_date, ceteSysAdminUserId, now_date;   
                       RAISE NOTICE 'row inserted into userpdtrainingdetail';                    
 	     END IF;

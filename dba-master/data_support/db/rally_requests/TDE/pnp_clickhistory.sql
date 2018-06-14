@@ -1,24 +1,10 @@
 -- Add to status report query which will compare PNP identified for a student vs PNP used   
 with tmp_response as (
-SELECT assessmentprogramid,studentid,studentstestid, task.tools
-from tdeclickhistory_archive 
-cross join unnest (tdeclickhistory_archive.tasks) as t1(task)
-where studentlast3 between '000' and '500'
+SELECT assessmentprogramid,studentid, task.tools
+from tdeclickhistory 
+cross join unnest (tdeclickhistory.tasks) as t1(task)
 )
-select distinct studentid,studentstestid,respond.name
-from tmp_response 
-cross join unnest(tmp_response.tools) as t2(respond)
-where assessmentprogramid=12  
-and respond.name in ('auditorycalming','screenoverlay','screencontrast','magnification')
-order by studentid;
-
-with tmp_response as (
-SELECT assessmentprogramid,studentid,studentstestid, task.tools
-from tdeclickhistory_archive 
-cross join unnest (tdeclickhistory_archive.tasks) as t1(task)
-where studentlast3 between '501' and '999'
-)
-select distinct studentid,studentstestid,respond.name
+select distinct studentid,respond.name
 from tmp_response 
 cross join unnest(tmp_response.tools) as t2(respond)
 where assessmentprogramid=12  
@@ -27,25 +13,11 @@ order by studentid;
 
 
 with tmp_response as (
-SELECT assessmentprogramid,studentid,studentstestid,task.buttons
-from tdeclickhistory_archive 
-cross join unnest (tdeclickhistory_archive.tasks) as t1(task)
-where studentlast3 between '000' and '500'
+SELECT assessmentprogramid,studentid,task.buttons
+from tdeclickhistory 
+cross join unnest (tdeclickhistory.tasks) as t1(task)
 )
-select distinct studentid,studentstestid,respond.name
-from tmp_response 
-cross join unnest(tmp_response.buttons) as t2(respond)
-where assessmentprogramid=12 and respond.name in ('Text To Speech Play','Text To Speech Pause')
-order by studentid;
-
-
-with tmp_response as (
-SELECT assessmentprogramid,studentid,studentstestid,task.buttons
-from tdeclickhistory_archive 
-cross join unnest (tdeclickhistory_archive.tasks) as t1(task)
-where studentlast3 between '501' and '999'
-)
-select distinct studentid,studentstestid,respond.name
+select distinct studentid,respond.name
 from tmp_response 
 cross join unnest(tmp_response.buttons) as t2(respond)
 where assessmentprogramid=12 and respond.name in ('Text To Speech Play','Text To Speech Pause')
@@ -53,11 +25,9 @@ order by studentid;
 
 ---move to ep aws
 drop table if exists tmp_aws;
-create temporary table tmp_aws (studentid bigint,studentstestid bigint, name text);
-\copy  tmp_aws from 'tmp_tool_1.csv' DELIMITER ',' CSV HEADER;
-\copy  tmp_aws from 'tmp_tool_2.csv' DELIMITER ',' CSV HEADER;
-\copy  tmp_aws from 'tmp_button_1.csv' DELIMITER ',' CSV HEADER;
-\copy  tmp_aws from 'tmp_button_2.csv' DELIMITER ',' CSV HEADER;
+create temporary table tmp_aws (studentid bigint,name text);
+\copy  tmp_aws from 'tmp_tool.csv' DELIMITER ',' CSV HEADER;
+\copy  tmp_aws from 'tmp_button.csv' DELIMITER ',' CSV HEADER;
 
 drop table if exists tmp_color;
 create temporary table tmp_color (code text, name text);
@@ -91,7 +61,6 @@ where name='Text To Speech Play' or name='Text To Speech Pause';
                    HAVING count(*)>1);
 
 
-
 				   
 
 drop table if exists tmp_table;
@@ -116,30 +85,25 @@ left outer JOIN profileitemattributecontainer piac ON pianc.attributecontainerid
 where  pia.attributename ='assignedSupport' and spiav.selectedvalue='true'
 and piac.attributecontainer in ('AuditoryBackground','ColourOverlay','InvertColourChoice','Magnification','Spoken')
 ) 
-select distinct tmp.ssid,tmp.studentid,ca.abbreviatedname,ts.operationaltestwindowid,piac.id piacid,piac.attributecontainer,pia.id piaid,pia.attributename,spiav.selectedvalue
+select distinct tmp.ssid,tmp.studentid,piac.id piacid,piac.attributecontainer,pia.id piaid,pia.attributename,spiav.selectedvalue
 ,case when tmp1.name=piac.attributecontainer then 'Yes' else 'No' end as aws_value
 into temp tmp_table
 from tmp_pnp tmp
 join tmp_value tmp2 on tmp2.studentid=tmp.studentid
-join studentstests st on st.studentid=tmp.studentid
-join testcollection tc on tc.id=st.testcollectionid
-join contentarea ca on ca.id=tc.contentareaid
 JOIN studentprofileitemattributevalue spiav ON tmp.studentid = spiav.studentid
 JOIN profileitemattributenameattributecontainer pianc ON spiav.profileitemattributenameattributecontainerid =pianc.id
 JOIN profileitemattribute pia ON pianc.attributenameid = pia.id
 JOIN profileitemattributecontainer piac ON pianc.attributecontainerid = piac.id and piac.id=tmp2.id
-Full outer join tmp_aws tmp1 on tmp1.studentid=tmp.studentid and piac.attributecontainer=tmp1.name and tmp1.studentstestid=st.id
+Full outer join tmp_aws tmp1 on tmp1.studentid=tmp.studentid and piac.attributecontainer=tmp1.name
 where spiav.selectedvalue<>''
 order by tmp.studentid,piac.attributecontainer,pia.attributename,spiav.selectedvalue;
 
 
 drop table if exists tmp_newtable;
 select distinct s.statestudentidentifier  "StateStudentIdentifier"
-,tmp.abbreviatedname       "Subject"
 ,otd.schoolname            "SchoolName"
 ,otd.districtname          "DistrictName"
 ,otd.statename             "StateName"
-,tmp.operationaltestwindowid "OperationalTestWindowid"
 ,Max(case when attributecontainer='Spoken'and attributename='assignedSupport' then selectedvalue end ) as "Spoken-assignedSupport"
 ,Max(case when attributecontainer='Spoken'and attributename='activateByDefault' then selectedvalue end ) as "Spoken-activateByDefault"
 ,Max(case when attributecontainer='Spoken'and attributename='directionsOnly' then selectedvalue end ) as "Spoken-directionsOnly"
@@ -169,7 +133,7 @@ inner join enrollment e on e.studentid=s.id
 inner join organizationtreedetail otd on otd.schoolid=e.attendanceschoolid
 left outer join tmp_color cl on cl.code=tmp.selectedvalue 
 where e.activeflag is true and s.activeflag is true and e.currentschoolyear=2018
-group by s.statestudentidentifier,otd.schoolname ,otd.districtname,  otd.statename,tmp.abbreviatedname
+group by s.statestudentidentifier,otd.schoolname ,otd.districtname,  otd.statename
 order by  otd.schoolname,otd.districtname,s.statestudentidentifier ;
 
 

@@ -113,8 +113,6 @@ update testpanelstagetestcollection  set activeflag = false where testpanelstage
 update testpanelstage set activeflag = false where id=83;
 update testpanel set activeflag = false where id=28;
 
-
-
 commit;
 
 --prod
@@ -176,14 +174,3 @@ update testpanelstagetestcollection set activeflag = false, modifieddate = now()
 
 update testpanelstagetestcollection set activeflag = false, modifieddate = now() where id = 111 and externaltestcollectionid=6075;
 update testpanelstagetestcollection set activeflag = false, modifieddate = now() where id = 112 and externaltestcollectionid=6076;
-
-
--- based on test pulished status
-update testpanelstagetestcollection set activeflag = false, modifieddate = now() where id = 142 and externaltestcollectionid=6875;
-update testpanelstagetestcollection set activeflag = false, modifieddate = now() where id = 141 and externaltestcollectionid=6874;
-
-select tct.*,t.id,t.status from testcollectionstests tct
-inner join test t on t.id=tct.testid  where tct.testcollectionid in  (select id from testcollection where externalid =6875);
-
-
-

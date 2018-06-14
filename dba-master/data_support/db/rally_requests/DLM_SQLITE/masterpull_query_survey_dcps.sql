@@ -66,10 +66,6 @@ SELECT DISTINCT
        testlet.testletname,
        taskvariantsfoils.foilsorder,
        roster.statecourses,
-	   roster.statesubjectarea subjectenrolled,
-	   studentstests.rosteridtested,  
-	   studentstests.teacheridtested, 
-	   studentstests.rostertested,
        studentsresponses.responsetext 
        FROM student
 				   LEFT JOIN enrollmentsrosters ON (enrollmentsrosters.enrollmentid = student.enrollmentid)
@@ -93,7 +89,7 @@ SELECT DISTINCT
 	   student.state NOT IN ('flatland', 'DLM QC State', 'AMP QC State', 'KAP QC State', 'Playground QC State', 'Flatland',
                                  'DLM QC YE State', 'DLM QC IM State', 'DLM QC IM State ', 'DLM QC EOY State','Service Desk QC State','NY Training State','QA QC State')
 			    AND student.activeflag = 1
-			   AND ((student.activeenrollmentflag=1 AND enrollmentsrosters.activeflag = 1 AND roster.activeflag = 1 AND student.activeassessmentflag=1)
+			   AND ((student.activeenrollmentflag=1 AND enrollmentsrosters.activeflag = 1 AND roster.activeflag = 1)
 				  OR studentstests.teststatus IN ('complete')
 				)
 			   AND ( (studentstests.teststatus is null) OR

@@ -78,10 +78,6 @@ SELECT DISTINCT
 	        else 'Spring' end as window, 
 	 case when studentstests_inactive.windowid in (10269,10287,10296,10271,10285,10294,10273,10275,10277,10292,10279,10283,10281,10289,10260,10263,10265,10267) then 'Fieldtest' 
 	      else 'Operational' end  as pool,
-		roster.statesubjectarea subjectenrolled,  
-		studentstests_inactive.rosteridtested,  
-		studentstests_inactive.teacheridtested, 
-		studentstests_inactive.rostertested, 
 	   studentsresponses.readableresponse,
 	   studentsresponses.responsetext	 
        FROM student
