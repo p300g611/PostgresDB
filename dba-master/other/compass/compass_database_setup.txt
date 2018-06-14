@@ -1,0 +1,71 @@
+##Step1:backup process --compass_EP
+#login putty to epdb2.qa.cete.us 
+#global creation already completed 
+
+sudo -u postgres -i 
+
+pg_dump -v -Fc -f /tmp/portalqa-`date +"%Y%m%d"`.sqlc portalqa
+
+#pg_dumpall -v -g -f /tmp/portalqa_global-`date +"%Y%m%d"`.sql
+
+
+
+##Step2:backup process --compass_cb
+#login putty to cbdb2.qa.cete.us
+#global creation already completed 
+
+sudo -u postgres -i 
+
+pg_dump -v -Fc -f /tmp/lportal-`date +"%Y%m%d"`.sqlc lportal
+
+#pg_dumpall -v -g -f /tmp/cbdb2_global-`date +"%Y%m%d"`.sql
+
+
+
+##Step3:restore process --compass_EP 
+#login jumper1 from putty 
+
+ssh -A kucpapdb01.ku.cete.us
+
+##Warning please change the date to backup file today date 20180315## -->> 20180418
+	  
+rsync -avz -P -e "ssh" --rsync-path="sudo rsync" epdb2.qa.cete.us:/tmp/portalqa-20180418##.sqlc /tmp/	  
+
+sudo -u postgres -i
+
+psql 
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND datname = 'portalprod';
+
+drop database portalprod
+
+Ctrl+d
+
+createdb -O aart portalprod
+
+pg_restore -v -h kucpapdb01.ku.cete.us -U aart -d portalprod /tmp/portalqa-20180418##.sqlc
+
+
+##Step4:restore process --compass_CP
+#login jumper1 from putty
+
+ssh -A kucpcbdb01.ku.cete.us
+
+##Warning please change the date to backup file today date 20180315## -->> 20180418
+
+rsync -avz -P -e "ssh" --rsync-path="sudo rsync" cbdb2.qa.cete.us:/tmp/lportal-20180315##.sqlc /tmp/	  
+
+sudo -u postgres -i
+
+psql 
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND datname = 'lportal';
+
+drop database lportal
+
+Ctrl+d
+
+createdb -O lportal lportal
+
+pg_restore -v -h kucpcbdb01.ku.cete.us -U lportal -d lportal /tmp/lportal-20180418##.sqlc
+

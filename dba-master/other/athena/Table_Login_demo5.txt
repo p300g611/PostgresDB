@@ -1,0 +1,46 @@
+CREATE EXTERNAL TABLE `studentlogin_demo5`(
+  `studentid` int COMMENT 'from deserializer', 
+  `osbrowser` string COMMENT 'from deserializer', 
+  `logintime` string COMMENT 'from deserializer', 
+  `logouttime` string COMMENT 'from deserializer', 
+  `studentlogintime` bigint COMMENT 'from deserializer', 
+  `studentlogouttime` string COMMENT 'from deserializer', 
+  `timespent` int COMMENT 'from deserializer', 
+  `filename` string COMMENT 'from deserializer', 
+  `machine` struct<model:string,os:string> COMMENT 'from deserializer', 
+  `logintimestampvalues` struct<locallogintime:string,serverlogintime:string> COMMENT 'from deserializer', 
+  `logouttimestampvalues` struct<locallogouttime:string,serverlogouttime:string> COMMENT 'from deserializer')
+PARTITIONED BY ( 
+  `studentlast3` string)
+ROW FORMAT SERDE 
+  'org.openx.data.jsonserde.JsonSerDe' 
+WITH SERDEPROPERTIES ( 
+  'paths'='filename,logintime,logintimestampvalues,logouttime,logouttimestampvalues,machine,osbrowser,studentid,studentlogintime,studentlogouttime,timespent') 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.mapred.TextInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  's3://kite-clickhistory-prod-archive/'
+TBLPROPERTIES (
+  'CrawlerSchemaDeserializerVersion'='1.0', 
+  'CrawlerSchemaSerializerVersion'='1.0', 
+  'UPDATED_BY_CRAWLER'='studentlogin-qa-test', 
+  'averageRecordSize'='300', 
+  'classification'='json', 
+  'compressionType'='none', 
+  'objectCount'='2268', 
+  'recordCount'='2268', 
+  'sizeKey'='886353', 
+  'typeOfData'='file')
+
+--Example of adding partition
+
+
+ALTER TABLE studentlogin_demo5
+ADD PARTITION (studentlast3='000')
+location 's3://kite-clickhistory-prod-archive/000';
+               
+               
+--Examples of queries
+select * from studentlogin_demo5 where studentlast3='000' and studentid=1087000

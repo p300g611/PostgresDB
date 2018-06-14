@@ -1,0 +1,20 @@
+####Turn off dw jobs:
+##login to dw server (on-prem aartdwdb.prodku.cete.us)  and (on-aws eapaartdwap01.prod.east.cete.us)
+user_name@jumper1.prodku ~ $ ssh aartdwdb.prodku.cete.us
+user_name@aartdwdb.prodku $ cd /etc/cron
+user_name@aartdwdb.prodku /etc/cron.d $ ll
+user_name@aartdwdb.prodku /etc/cron.d $ sudo rm aartdw_main
+user_name@aartdwdb.prodku /etc/cron.d $ sudo rm aartdw_fulltable
+user_name@aartdwdb.prodku /etc/cron.d $ sudo rm aartdw_validation
+user_name@aartdwdb.prodku /etc/cron.d $ ll
+user_name@aartdwdb.prodku ~ $  sudo /sbin/service chef-client stop
+
+##from db 
+select * from etljobs ;
+update etljobs set scheduled=false;
+
+####TO re-start :
+user_name@aartdwdb.prodku ~ $  sudo /sbin/service chef-client start
+#TO re-start the chef-client
+user_name@aartdwdb.prodku ~ $ sudo chef-client
+update etljobs set scheduled=true;

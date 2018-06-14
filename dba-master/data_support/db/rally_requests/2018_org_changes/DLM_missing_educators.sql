@@ -1,0 +1,1360 @@
+/*
+--if any inactive DLM student assessment records not taken tests for 2018 school year under DLM physical delete dlm record from student assessment and enrolled for kap
+with dups as (
+select studentid,count(distinct assessmentprogramid) cnt  from studentassessmentprogram group by studentid 
+having count(distinct assessmentprogramid)>1)
+select distinct e.studentid,s.stateid from enrollment e 
+inner join student s on s.id=e.studentid
+inner join studentassessmentprogram sap on sap.studentid=e.studentid and sap.assessmentprogramid=3 and sap.activeflag is false
+where e.currentschoolyear =2018 and e.activeflag is true 
+and e.studentid in (select studentid from dups)
+-- and e.studentid in (295878,769524)
+and  exists (select st.studentid from studentstests  st 
+inner join testsession ts on ts.id=st.testsessionid
+inner join operationaltestwindow optw on optw.id=ts.operationaltestwindowid
+where schoolyear=2018 and assessmentprogramid=3 and st.studentid=1325666
+and st.enrollmentid=e.id) and e.studentid=1325666;
+
+
+select ts.id tsid,ts.rosterid,st.id stid,st.studentid,st.testid,st.status,contentareaid,st.activeflag,st.id ,ts.source,st.status,operationaltestwindowid op
+from studentstests st 
+inner join testsession ts on ts.id=st.testsessionid and schoolyear=2018
+inner join testcollection tc on tc.id=ts.testcollectionid
+where studentid in (     662971,
+640396,
+1167706,
+1167772,
+727086,
+1171167,
+1043179,
+547223,
+710220,
+532357,
+815943,
+1353395
+) order by studentid,contentareaid,enrollmentid,rosterid;
+*/
+
+select distinct st.studentid,ts.source,(select windowname from operationaltestwindow where id=ts.operationaltestwindowid)
+from studentstests st 
+inner join testsession ts on ts.id=st.testsessionid and schoolyear=2018
+inner join testcollection tc on tc.id=ts.testcollectionid
+
+where studentid in (        85156,
+    188140,
+    193307,
+    314771,
+    552534,
+    555044,
+    679705,
+   1043271,
+   1086015,
+   1113787,
+   1261765,
+   1261829,
+   1261830,
+   1325975) and ts.source='ITI'order by studentid,contentareaid,enrollmentid,rosterid;
+-- some they have enrollment for 2018 and inactivated and move to kap
+--do not have any enrollment 
+-- 
+drop table if exists tmp_dlm_students;
+with dups as (
+select studentid,count(distinct assessmentprogramid) cnt  from studentassessmentprogram group by studentid 
+having count(distinct assessmentprogramid)>1)
+select distinct sap.*,e.id enrollmentid,e.currentschoolyear, e.sourcetype into temp tmp_dlm_students from enrollment e 
+inner join student s on s.id=e.studentid
+inner join studentassessmentprogram sap on sap.studentid=e.studentid and sap.assessmentprogramid=3 and sap.activeflag is false
+where e.studentid in (select studentid from dups)
+and not exists (select 1 from studentstests  st 
+inner join testsession ts on ts.id=st.testsessionid
+inner join operationaltestwindow optw on optw.id=ts.operationaltestwindowid
+where schoolyear=2018 and assessmentprogramid=3 
+and st.studentid=e.studentid) and e.currentschoolyear=2018;
+
+\copy (select * from tmp_dlm_students) to 'DLM_KAP_dual_kids.csv' (FORMAT CSV, HEADER TRUE, FORCE_QUOTE *);
+
+-- if not on KS grf should be okay no enrollment or roster 
+select distinct dlm.id ,kap.studentid  from tmp_dlm_kid dlm 
+full outer join tmp_dlm_students kap on kap.studentid=dlm.id
+where dlm.id is null ; 
+
+-- dlm kids 
+select distinct dlm.id ,kap.studentid,sap.assessmentprogramid,sap.activeflag  from tmp_dlm_kid dlm 
+full outer join tmp_dlm_students kap on kap.studentid=dlm.id
+inner join studentassessmentprogram sap on sap.studentid=dlm.id
+where kap.studentid is null ; 
+
+
+select distinct dlm.id   from tmp_dlm_kid dlm 
+full outer join tmp_dlm_students kap on kap.studentid=dlm.id
+where dlm.id is not null and kap.studentid is not null  ; 
+
+
+--test 
+
+create temp table tmp_grf (studentid bigint, levelid int);
+\copy tmp_grf from 'ks_grf_for_ats_csv.csv' delimiter ',' csv header ;
+
+select distinct studentid  into temp tmp_level_dlm from tmp_grf where  studentid not in (
+select distinct studentid from studentassessmentprogram  sap where sap.assessmentprogramid=3 and sap.activeflag is true);
+
+
+select distinct studentid  into temp tmp_level_dlm9 from tmp_grf where  studentid not in (
+select distinct studentid from studentassessmentprogram  sap where sap.assessmentprogramid=3 and sap.activeflag is true) and levelid=9;
+
+ select studentid,count( distinct levelid ) cnt
+  into temp tmp_level90
+ from tmp_grf 
+ where studentid in (select studentid from tmp_grf where levelid=9)
+ group by studentid having count( distinct levelid )>1;
+
+ -- have more than 9 and other and not have active dlm 
+
+  studentid
+-----------
+    188141
+    210134
+    639039
+    867267
+   1429357
+(5 rows)
+
+
+select distinct studentid ||',' from tmp_level_dlm9 where studentid not in ( select studentid from tmp_level90);
+select count(distinct studentid) from tmp_level_dlm9 where studentid not in ( select studentid from tmp_level90);
+
+
+
+
+select distinct sap.*,e.id enrollmentid,e.currentschoolyear, e.sourcetype into temp tmp_dlm_students 
+from enrollment e 
+inner join student s on s.id=e.studentid
+inner join studentassessmentprogram sap on sap.studentid=e.studentid 
+where e.studentid in (select distinct studentid from tmp_level_dlm9 where studentid not in ( select studentid from tmp_level90))
+and not exists (select 1 from studentstests  st 
+inner join testsession ts on ts.id=st.testsessionid
+inner join operationaltestwindow optw on optw.id=ts.operationaltestwindowid
+where schoolyear=2018 and assessmentprogramid=3 
+and st.studentid=e.studentid) and e.currentschoolyear=2018;
+
+select distinct e.studentid||','
+from enrollment e
+inner join student s on s.id=e.studentid
+inner join studentassessmentprogram sap on sap.studentid=e.studentid
+where e.studentid in (select distinct studentid from tmp_level_dlm9 where studentid not in ( select studentid from tmp_level90))
+and not  exists (select 1 from studentstests  st
+inner join testsession ts on ts.id=st.testsessionid
+inner join operationaltestwindow optw on optw.id=ts.operationaltestwindowid
+where schoolyear=2018 and assessmentprogramid=3
+and st.studentid=e.studentid) and e.currentschoolyear=2018;
+
+
+select distinct teststatus from masterpull where id in 
+(       1024860,
+ 1025575,
+ 1038837,
+ 1043179,
+ 1043271,
+ 1049471,
+ 1060181,
+ 1084676,
+ 1086015,
+ 1086159,
+ 1086870,
+ 1091318,
+ 1091363,
+ 109383,
+ 1097371,
+ 1104488,
+ 1105263,
+ 1108658,
+ 1113787,
+ 1114575,
+ 1118802,
+ 112085,
+ 1132079,
+ 113316,
+ 1137619,
+ 114195,
+ 114200,
+ 114204,
+ 114207,
+ 114210,
+ 114212,
+ 114213,
+ 114215,
+ 1152282,
+ 1152283,
+ 115717,
+ 1157652,
+ 1157672,
+ 115870,
+ 1159095,
+ 1165567,
+ 1165942,
+ 1166014,
+ 1167706,
+ 1167746,
+ 1167772,
+ 1167792,
+ 1171167,
+ 1172691,
+ 1174143,
+ 1174254,
+ 1182973,
+ 118634,
+ 1210201,
+ 1210221,
+ 1210412,
+ 1210666,
+ 1210690,
+ 1211097,
+ 1211123,
+ 1216070,
+ 1221280,
+ 1227078,
+ 1230101,
+ 1233639,
+ 1239185,
+ 1258304,
+ 1261765,
+ 1261829,
+ 1261830,
+ 1273192,
+ 128903,
+ 1324350,
+ 1324599,
+ 1325410,
+ 1325975,
+ 133089,
+ 1339385,
+ 1353395,
+ 1362998,
+ 136381,
+ 137434,
+ 1415202,
+ 1423083,
+ 142907,
+ 142958,
+ 143079,
+ 143971,
+ 143981,
+ 144064,
+ 144119,
+ 144152,
+ 144163,
+ 148172,
+ 151300,
+ 157517,
+ 158043,
+ 158054,
+ 158056,
+ 158295,
+ 158824,
+ 159825,
+ 161277,
+ 163458,
+ 163486,
+ 165128,
+ 165129,
+ 166938,
+ 167463,
+ 16884,
+ 169268,
+ 169269,
+ 169289,
+ 16954,
+ 169561,
+ 169579,
+ 17135,
+ 17155,
+ 173474,
+ 173567,
+ 173699,
+ 175604,
+ 177098,
+ 179510,
+ 182025,
+ 182026,
+ 182027,
+ 182338,
+ 184099,
+ 186122,
+ 188140,
+ 188143,
+ 193307,
+ 193699,
+ 194585,
+ 195405,
+ 195818,
+ 198563,
+ 199701,
+ 200375,
+ 201884,
+ 206750,
+ 207379,
+ 207381,
+ 210020,
+ 210281,
+ 213166,
+ 213620,
+ 213631,
+ 214104,
+ 214148,
+ 214826,
+ 228783,
+ 232434,
+ 234333,
+ 236278,
+ 249898,
+ 25015,
+ 252748,
+ 257302,
+ 260142,
+ 263334,
+ 264888,
+ 26508,
+ 269820,
+ 271973,
+ 273599,
+ 279698,
+ 279783,
+ 279887,
+ 279890,
+ 287521,
+ 290599,
+ 291079,
+ 291565,
+ 295150,
+ 295878,
+ 295985,
+ 301348,
+ 301372,
+ 309211,
+ 30928,
+ 31007,
+ 310704,
+ 311205,
+ 314542,
+ 314549,
+ 314771,
+ 317237,
+ 321797,
+ 32523,
+ 325248,
+ 32623,
+ 328080,
+ 329026,
+ 342577,
+ 342578,
+ 363020,
+ 365436,
+ 386281,
+ 391293,
+ 392917,
+ 40161,
+ 405696,
+ 40660,
+ 408096,
+ 40810,
+ 408266,
+ 408542,
+ 409193,
+ 42762,
+ 42978,
+ 43098,
+ 438298,
+ 44736,
+ 44980,
+ 45057,
+ 45066,
+ 463165,
+ 464663,
+ 464698,
+ 472791,
+ 472976,
+ 47691,
+ 478883,
+ 48105,
+ 481169,
+ 48951,
+ 49140,
+ 49172,
+ 49280,
+ 49317,
+ 49576,
+ 49649,
+ 497223,
+ 500481,
+ 501331,
+ 503655,
+ 504512,
+ 506140,
+ 514288,
+ 517425,
+ 518216,
+ 518705,
+ 518709,
+ 519250,
+ 521507,
+ 523320,
+ 52523,
+ 53104,
+ 53106,
+ 53111,
+ 53112,
+ 531670,
+ 532301,
+ 532357,
+ 534044,
+ 535907,
+ 535983,
+ 537876,
+ 539971,
+ 540135,
+ 540136,
+ 540138,
+ 540351,
+ 545219,
+ 545330,
+ 547223,
+ 547446,
+ 547536,
+ 547537,
+ 547539,
+ 547540,
+ 547541,
+ 547675,
+ 547733,
+ 547884,
+ 549004,
+ 550766,
+ 551268,
+ 551602,
+ 552279,
+ 552534,
+ 552720,
+ 553127,
+ 553241,
+ 553305,
+ 553628,
+ 555044,
+ 561465,
+ 566974,
+ 567029,
+ 575101,
+ 576852,
+ 577576,
+ 57852,
+ 579015,
+ 584776,
+ 589588,
+ 589651,
+ 591131,
+ 596893,
+ 597315,
+ 597352,
+ 60078,
+ 603457,
+ 604998,
+ 605091,
+ 605373,
+ 622147,
+ 627586,
+ 628393,
+ 631334,
+ 631381,
+ 632254,
+ 63295,
+ 63381,
+ 639428,
+ 640396,
+ 646261,
+ 65217,
+ 655857,
+ 656926,
+ 657411,
+ 65833,
+ 658597,
+ 660190,
+ 661034,
+ 662971,
+ 663207,
+ 668634,
+ 669370,
+ 672399,
+ 672956,
+ 673519,
+ 676595,
+ 679705,
+ 688182,
+ 689358,
+ 689443,
+ 690122,
+ 701381,
+ 701401,
+ 701440,
+ 702175,
+ 70245,
+ 702891,
+ 705116,
+ 707730,
+ 707939,
+ 710220,
+ 71044,
+ 713230,
+ 717623,
+ 718420,
+ 720930,
+ 722994,
+ 727086,
+ 730099,
+ 731882,
+ 731889,
+ 731898,
+ 734818,
+ 736877,
+ 737337,
+ 738454,
+ 738654,
+ 759318,
+ 760783,
+ 76271,
+ 767043,
+ 768239,
+ 76870,
+ 769524,
+ 775215,
+ 775262,
+ 782394,
+ 786972,
+ 79354,
+ 796178,
+ 797075,
+ 797109,
+ 801764,
+ 810452,
+ 811379,
+ 813377,
+ 815943,
+ 816357,
+ 816490,
+ 817228,
+ 818718,
+ 820185,
+ 821277,
+ 821506,
+ 823217,
+ 828610,
+ 828624,
+ 828676,
+ 838621,
+ 84388,
+ 84391,
+ 85005,
+ 85156,
+ 85280,
+ 87375,
+ 877087,
+ 87932,
+ 879391,
+ 879399,
+ 879409,
+ 879421,
+ 883779,
+ 88378,
+ 886375,
+ 88672,
+ 890072,
+ 896543,
+ 901167,
+ 902391,
+ 902866,
+ 907335,
+ 93194,
+ 94956,
+ 98163,
+ 98506,
+ 98630,
+ 98728
+) order by id;
+
+
+select * 
+into temp tmp_dlm_kid
+from student 
+where id in 
+(14324
+,16884
+,16954
+,17135
+,17155
+,23553
+,23556
+,25015
+,26508
+,30828
+,30928
+,31007
+,32483
+,32523
+,32543
+,32623
+,32822
+,39604
+,39840
+,40161
+,40660
+,40810
+,42179
+,42235
+,42762
+,42978
+,43098
+,44736
+,44980
+,45057
+,45066
+,47691
+,47771
+,48105
+,48951
+,49140
+,49154
+,49172
+,49200
+,49207
+,49247
+,49249
+,49280
+,49317
+,49571
+,49576
+,49649
+,51851
+,52523
+,53104
+,53106
+,53111
+,53112
+,57574
+,57703
+,57852
+,58162
+,59197
+,59198
+,60078
+,63295
+,63298
+,63381
+,65217
+,65833
+,67096
+,67312
+,69373
+,70245
+,71044
+,74015
+,76271
+,76870
+,78589
+,79354
+,84388
+,84391
+,84834
+,84836
+,84839
+,85005
+,85089
+,85137
+,85156
+,85280
+,87375
+,87932
+,88378
+,88672
+,93194
+,94946
+,94948
+,94956
+,94959
+,94990
+,97447
+,98163
+,98167
+,98506
+,98630
+,98728
+,100275
+,109383
+,109424
+,109442
+,109553
+,109628
+,110385
+,110514
+,112085
+,112160
+,112167
+,112216
+,112959
+,113316
+,113319
+,114195
+,114196
+,114200
+,114201
+,114204
+,114207
+,114210
+,114212
+,114213
+,114215
+,115717
+,115870
+,115895
+,115896
+,115897
+,116089
+,116095
+,118634
+,124550
+,126026
+,127082
+,128903
+,133089
+,136381
+,137434
+,138548
+,142907
+,142958
+,143079
+,143971
+,143981
+,144064
+,144119
+,144152
+,144163
+,144352
+,148172
+,151300
+,157517
+,158041
+,158043
+,158054
+,158056
+,158295
+,158824
+,159825
+,160321
+,160469
+,161277
+,163458
+,163486
+,165128
+,165129
+,165707
+,166938
+,167013
+,167463
+,169268
+,169269
+,169289
+,169561
+,169579
+,172418
+,173474
+,173567
+,173696
+,173699
+,175604
+,177098
+,179510
+,182025
+,182026
+,182027
+,182338
+,184099
+,184466
+,186122
+,186578
+,188136
+,188140
+,188141
+,188143
+,188153
+,188709
+,193307
+,193699
+,194585
+,194621
+,195405
+,195818
+,198563
+,199701
+,200375
+,201883
+,201884
+,206750
+,207377
+,207379
+,207381
+,210015
+,210020
+,210134
+,210281
+,213166
+,213620
+,213631
+,214104
+,214148
+,214826
+,214896
+,228783
+,232434
+,234333
+,236278
+,238515
+,238550
+,249818
+,249819
+,249898
+,250293
+,251309
+,251580
+,252748
+,257302
+,258757
+,260142
+,263334
+,264562
+,264888
+,269820
+,271973
+,273599
+,279698
+,279783
+,279887
+,279890
+,287521
+,290599
+,291079
+,291565
+,295150
+,295878
+,295985
+,301348
+,301372
+,309211
+,310704
+,311205
+,314542
+,314549
+,314771
+,317237
+,321797
+,325248
+,325455
+,328080
+,329026
+,342577
+,342578
+,349574
+,356068
+,358246
+,363020
+,365436
+,386234
+,386281
+,391293
+,392917
+,392922
+,405696
+,408041
+,408096
+,408266
+,408542
+,409193
+,434569
+,436647
+,438298
+,443845
+,462761
+,463165
+,463181
+,463197
+,463309
+,464663
+,464698
+,468530
+,472791
+,472976
+,478883
+,481169
+,484757
+,497223
+,498866
+,499282
+,500481
+,501331
+,503655
+,504512
+,505525
+,506140
+,506733
+,508294
+,509378
+,511185
+,511193
+,511477
+,511932
+,512022
+,514288
+,515337
+,517193
+,517425
+,518216
+,518705
+,518709
+,519250
+,521354
+,521507
+,522630
+,522631
+,523320
+,529893
+,531670
+,532301
+,532357
+,534044
+,535907
+,535983
+,536608
+,537876
+,538730
+,539120
+,539929
+,539971
+,540135
+,540136
+,540138
+,540351
+,545219
+,545330
+,547223
+,547446
+,547536
+,547537
+,547539
+,547540
+,547541
+,547675
+,547733
+,547884
+,548064
+,548901
+,549004
+,550375
+,550766
+,551268
+,551602
+,552279
+,552534
+,552720
+,553127
+,553241
+,553305
+,553628
+,555044
+,557251
+,561465
+,565658
+,566974
+,567029
+,570117
+,575101
+,575146
+,575382
+,576852
+,577576
+,578647
+,578798
+,579015
+,579099
+,579105
+,579133
+,579250
+,584776
+,589588
+,589651
+,591131
+,596893
+,596948
+,597315
+,597352
+,603457
+,604998
+,605091
+,605373
+,606084
+,606521
+,622147
+,623311
+,623855
+,625533
+,626810
+,627586
+,628393
+,631334
+,631381
+,632226
+,632254
+,632486
+,633434
+,635920
+,639039
+,639428
+,640396
+,646261
+,648246
+,648343
+,655857
+,656926
+,657411
+,658597
+,660190
+,660934
+,660952
+,660953
+,661002
+,661008
+,661015
+,661026
+,661034
+,661367
+,662971
+,663207
+,663689
+,668634
+,669370
+,672399
+,672956
+,673519
+,676595
+,679705
+,688182
+,689358
+,689443
+,690122
+,701381
+,701401
+,701440
+,701676
+,701787
+,702175
+,702891
+,704714
+,705116
+,706215
+,707730
+,707939
+,710220
+,713230
+,717623
+,718420
+,719138
+,720930
+,722291
+,722994
+,727086
+,730099
+,731882
+,731889
+,731898
+,734818
+,736877
+,737337
+,737766
+,738454
+,738654
+,739028
+,749921
+,759318
+,760783
+,767043
+,768239
+,769524
+,770157
+,775215
+,775262
+,782394
+,786972
+,792715
+,793857
+,795866
+,796178
+,797075
+,797109
+,801764
+,810452
+,811379
+,813377
+,815943
+,816357
+,816490
+,817228
+,818718
+,820185
+,821277
+,821506
+,821678
+,823217
+,828610
+,828624
+,828676
+,830152
+,831743
+,838091
+,838100
+,838621
+,846442
+,866137
+,867267
+,872115
+,873911
+,874330
+,875304
+,875451
+,877087
+,878077
+,878994
+,879391
+,879399
+,879409
+,879421
+,883391
+,883768
+,883779
+,883780
+,883792
+,883812
+,884693
+,884762
+,885544
+,886375
+,890072
+,892081
+,896261
+,896543
+,897356
+,897358
+,899020
+,901167
+,901475
+,901747
+,901880
+,902391
+,902745
+,902866
+,907335
+,929764
+,932072
+,932084
+,950654
+,988464
+,1024860
+,1025575
+,1038837
+,1040853
+,1043179
+,1043271
+,1049471
+,1049738
+,1060181
+,1076481
+,1080135
+,1080412
+,1082692
+,1082796
+,1084676
+,1085708
+,1086015
+,1086159
+,1086870
+,1091318
+,1091363
+,1091561
+,1091699
+,1091995
+,1096141
+,1097291
+,1097371
+,1104488
+,1105263
+,1108658
+,1109525
+,1113787
+,1114575
+,1116759
+,1117559
+,1118187
+,1118802
+,1123739
+,1131925
+,1131962
+,1132070
+,1132079
+,1133652
+,1137619
+,1149923
+,1152282
+,1152283
+,1155397
+,1155545
+,1156720
+,1157652
+,1157672
+,1157785
+,1159095
+,1162944
+,1162986
+,1163172
+,1165567
+,1165942
+,1166014
+,1167706
+,1167746
+,1167772
+,1167792
+,1169292
+,1170933
+,1171167
+,1172339
+,1172366
+,1172645
+,1172691
+,1173251
+,1174143
+,1174254
+,1174372
+,1174417
+,1176532
+,1176586
+,1181937
+,1182973
+,1186843
+,1210200
+,1210201
+,1210221
+,1210412
+,1210636
+,1210666
+,1210690
+,1211097
+,1211123
+,1213430
+,1215895
+,1215896
+,1215957
+,1216070
+,1216647
+,1217254
+,1217513
+,1217783
+,1221280
+,1227078
+,1229788
+,1230101
+,1233639
+,1239185
+,1240680
+,1255557
+,1258304
+,1261765
+,1261829
+,1261830
+,1270346
+,1271123
+,1273192
+,1318760
+,1324273
+,1324350
+,1324599
+,1324710
+,1325089
+,1325238
+,1325277
+,1325289
+,1325410
+,1325641
+,1325642
+,1325643
+,1325644
+,1325648
+,1325650
+,1325653
+,1325655
+,1325664
+,1325975
+,1328453
+,1328459
+,1328465
+,1328466
+,1330368
+,1330465
+,1330513
+,1333467
+,1336902
+,1339385
+,1341418
+,1343105
+,1343106
+,1353395
+,1362998
+,1392470
+,1394014
+,1394930
+,1414474
+,1415202
+,1416209
+,1417045
+,1417486
+,1418428
+,1420909
+,1420910
+,1420913
+,1420914
+,1420917
+,1420918
+,1420919
+,1420921
+,1420922
+,1420923
+,1422183
+,1423083
+,1425165
+,1425282
+,1425506
+,1429357
+,1441551
+,1441582
+,1441659
+,1442113
+,1447994
+,1447997
+,1452007
+,1461041
+,1473450)
+
+
+begin;
+delete from studentassessmentprogram
+where id in (select id from tmp_dlm_students where modifieddate::date<'2017-07-31')
+and assessmentprogramid=3 and activeflag is false;
+
+commit;
+
+\copy (select * from tmp_dlm_students) to 'tmp_dlm_students.csv' (FORMAT CSV, HEADER TRUE, FORCE_QUOTE *);
+
+tmp_dlm_students
+

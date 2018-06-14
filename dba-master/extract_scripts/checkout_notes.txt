@@ -1,0 +1,29 @@
+step 1: switch to group user and move to the code location
+
+        sudo -u aai_backup_sa -i 
+        cd /srv/extracts/source/aws
+
+step 2: update latest code 
+
+        svn up
+             optional step 2.1:
+                      if you want to switch user please press enter
+                      then your username and password                       
+        your user PW here ###### (then no)
+
+step 3:edit permission to execute
+
+       ll
+       chmod 777 *.py
+       chmod 777 *.sh
+
+step 4:convert into Unix format 
+    
+      dos2unix -k dlm_am_extract.sh
+      dos2unix -k dlm_pm_extract.sh
+      dos2unix -k extract_sqlite.py
+      dos2unix -k extract_sqlite_stage.py
+      dos2unix -k extracts.sh
+      dos2unix -k pnp_extract.py  
+
+step 5:change need to applied on KC site: dbakiteutil.prodkc.cete.us

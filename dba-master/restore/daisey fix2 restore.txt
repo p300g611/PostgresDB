@@ -1,0 +1,90 @@
+##transaction 
+
+p300g611@daiseyutil.klwc-prod ~ $ ssh -A aaiprddaisdb01.cc.ku.edu
+
+p300g611@AAIPRDDAISDB01.cc.ku.edu ~ $ sudo -u postgres -i
+
+postgres@AAIPRDDAISDB01.cc.ku.edu ~ $ cd /srv/pg_data/tmpd/
+
+postgres@AAIPRDDAISDB01.cc.ku.edu /srv/pg_data/tmpd $ pg_dump -v -Fc -f kehs-`date +"%Y%m%d"`.sqlc kehs
+
+createdb -O kehs kehs_sanitation
+
+pg_restore -v -h aaiprddaisdb01 -U postgres -d kehs_sanitation /srv/pg_data/tmpd/kehs-20180112.sqlc
+
+##run transaction sanitation
+
+postgres@AAIPRDDAISDB01.cc.ku.edu /srv/pg_data/tmpd $ pg_dump -v -Fc -f kehs_sanitation-`date +"%Y%m%d"`.sqlc kehs_sanitation
+
+postgres@AAIPRDDAISDB01.cc.ku.edu /srv/pg_data/tmpd $ dropdb kehs_sanitation
+
+scp p300g611@AAIPRDDAISDB01.cc.ku.edu:/srv/pg_data/tmpd/kehs_sanitation-20180112.sqlc  /home/p300g611/
+
+scp /home/p300g611/kehs_sanitation-20180112.sqlc  daiseydb2.fix.cete.us:/home/p300g611/
+
+p300g611@daiseyutil.klwc-prod ~ $ ssh -A daiseydb2.fix.cete.us
+
+p300g611@daiseydb2.fix ~ $ sudo -i
+
+daiseydb2.fix ~ # mv /home/p300g611/kehs_sanitation-20180112.sqlc /srv/tmp/
+
+daiseydb2.fix /srv/tmp # chown postgres:postgres kehs_sanitation-20180112.sqlc
+
+p300g611@daiseydb2.fix ~ $ sudo -u postgres -i
+
+##if any active connection kill from backend 
+
+postgres@daiseydb2.fix ~ $ dropdb kehs
+
+postgres@daiseydb2.fix ~ $ createdb -O kehs kehs
+
+postgres@daiseydb2.fix /srv/tmp $ ll
+
+pg_restore -v -h daiseydb2 -U kehs -d kehs /srv/tmp/kehs_sanitation-20180112.sqlc
+
+##report
+
+p300g611@daiseyutil.klwc-prod ~ $ ssh -A aaiprddaisrptdb01.cc.ku.edu
+
+p300g611@aaiprddaisrptdb01.cc.ku.edu ~ $ sudo -u postgres -i
+
+postgres@aaiprddaisrptdb01.cc.ku.edu ~ $ cd /srv/pg_data/tmpd/
+
+
+postgres@aaiprddaisrptdb01.cc.ku.edu /srv/pg_data/tmpd $ pg_dump -v -Fc -f daiseyreports-`date +"%Y%m%d"`.sqlc daiseyreports
+
+createdb -O kehs daiseyreports_sanitation
+
+pg_restore -v -h aaiprddaisrptdb01 -U postgres -d daiseyreports_sanitation /srv/pg_data/tmpd/daiseyreports-20180112.sqlc
+
+
+##run reporting sanitation 
+
+pg_dump -v -Fc -f daiseyreports_sanitation-`date +"%Y%m%d"`.sqlc daiseyreports_sanitation
+
+
+dropdb daiseyreports_sanitation
+
+scp p300g611@aaiprddaisrptdb01.cc.ku.edu:/srv/pg_data/tmpd/daiseyreports_sanitation-20180112.sqlc  /home/p300g611/daiseyreports_sanitation-20180112.sqlc
+
+scp /home/p300g611/daiseyreports_sanitation-20180112.sqlc  daiseyrptdb2.fix.cete.us:/home/p300g611/
+
+p300g611@daiseyutil.klwc-prod ~ $ ssh -A daiseyrptdb2.fix.cete.us
+
+p300g611@daiseyrptdb2.fix ~ $ sudo -i
+
+daiseyrptdb2.fix ~ # mv /home/p300g611/daiseyreports_sanitation-20180112.sqlc /srv/tmp/
+
+p300g611@daiseyrptdb2.fix ~ $ sudo -u postgres -i
+
+postgres@daiseyrptdb2.fix /srv/tmp $ dropdb daiseyreports;
+
+postgres@daiseyrptdb2.fix /srv/tmp $ createdb -O kehs daiseyreports;
+
+pg_restore -v -h daiseyrptdb2 -U kehs -d daiseyreports /srv/tmp/daiseyreports_sanitation-20180112.sqlc
+
+
+
+
+
+

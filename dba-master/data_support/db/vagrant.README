@@ -1,0 +1,15 @@
+Download and install the following software:
+
+https://www.vagrantup.com/
+
+https://www.virtualbox.org/
+
+https://sliksvn.com/download/
+
+After the initial installation of vagrant, run the following command:
+
+vagrant plugin install vagrant-vbguest
+
+After all installations are complete, run vagrant_initial_setup.bat to create your PostgreSQL VM.
+Once set up is complete, connect to localhost in PGAdmin or Putty to access you database.
+

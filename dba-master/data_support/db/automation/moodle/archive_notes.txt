@@ -1,0 +1,16 @@
+--Archive process
+ /srv/extracts/helpdesk/moodle/scripts/upload_log.txt     			 --> upload_log_2018.txt   -- Rename file
+ /srv/extracts/helpdesk/moodle/scripts/upload_log.txt                                          -- Create new file 
+
+ /srv/extracts/helpdesk/moodle/processed/upload_moodle   			 --> upload_moodle_2018    -- Rename folder
+ /srv/extracts/helpdesk/moodle/processed/upload_moodle                                         -- Create new file 
+ /srv/extracts/helpdesk/moodle/processed/upload_ep       			 --> upload_ep_2018        -- Rename folder
+ /srv/extracts/helpdesk/moodle/processed/upload_ep                                  		   -- Create new file 
+ 
+ /srv/extracts/helpdesk/moodle/state_roles/RTcompleted.csv           --> RTcompleted_2018.csv  -- Rename file
+ /srv/extracts/helpdesk/moodle/state_roles/RTcompleted.csv                                     -- Create new file based on JRP send all 2018 "YES" falg for distinct id records
+ /srv/extracts/helpdesk/moodle/state_roles/state_roles.csv           --> state_roles_2018.csv  -- Rename file
+ /srv/extracts/helpdesk/moodle/state_roles/state_roles.csv                                     -- Create new file based on JRP course info
+ 
+ /srv/extracts/helpdesk/moodle/scripts/upload_moodle.sql             -- 2018/replace with 2019
+ /srv/extracts/helpdesk/moodle/scripts/upload_ep.sql                 -- 2018/replace with 2019

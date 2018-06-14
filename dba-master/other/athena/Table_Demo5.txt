@@ -1,0 +1,43 @@
+--New table using kite-clickhistory-prod-archive
+
+CREATE EXTERNAL TABLE `tdeclickhistory_demo5`(
+  `studentid` bigint COMMENT 'from deserializer', 
+  `assessmentprogramid` int COMMENT 'from deserializer', 
+  `assessmentprogramname` string COMMENT 'from deserializer', 
+  `studentstestid` bigint COMMENT 'from deserializer', 
+  `studentstestsectionsid` bigint COMMENT 'from deserializer', 
+  `testid` bigint COMMENT 'from deserializer', 
+  `testsectionid` bigint COMMENT 'from deserializer', 
+  `ts` string COMMENT 'from deserializer', 
+  `timestampvalues` struct<localstartdatetime:string,serverstartdatetime:string,localenddatetime:string,serverenddatetime:string> COMMENT 'from deserializer', 
+  `timespent` bigint COMMENT 'from deserializer', 
+  `tasks` array<struct<id:int,testlet:struct<id:int,mediavariant:struct<id:int,externalid:int,groupnumber:int,sortorder:int,stimulustitle:string>>,isquestion:boolean,timespent:bigint,ts:string,questionnumber:int,displayedquestionnumber:int,navigation:struct<qnum:int,taskid:int,displayedqnum:int,testlet:struct<id:int,mediavariant:struct<id:int,externalid:int,groupnumber:int,sortorder:int,stimulustitle:string>>>,responses:array<struct<iscorrectresponse:boolean,responseoption:string,score:double,ts:string>>,buttons:array<struct<name:string,qnum:int,ts:string>>,tools:array<struct<action:string,name:string,ts:string>>>> COMMENT 'from deserializer', 
+  `globalactions` array<struct<name:string,ts:string,assessmentprogramname:string>> COMMENT 'from deserializer', 
+  `filename` string COMMENT 'from deserializer')
+PARTITIONED BY ( 
+  `studentlast3` string)
+ROW FORMAT SERDE 
+  'org.openx.data.jsonserde.JsonSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.mapred.TextInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  's3://kite-clickhistory-prod-archive/'
+TBLPROPERTIES (
+  'transient_lastDdlTime'='1523540555')
+
+
+--Example of last partition added
+ALTER TABLE tdeclickhistory_demo5
+ADD PARTITION (studentlast3='008')
+location 's3://kite-clickhistory-prod-archive/008';
+
+--Examples of queries
+select * from tdeclickhistory_demo5 where studentlast3='000' and studentid=1087000
+select * from tdeclickhistory_demo5 where studentlast3='001' and studentid=825001
+select * from tdeclickhistory_demo5 where studentlast3='005' and studentid=174005 
+
+select * from tdeclickhistory_demo5 where studentlast3='006' and studentid=82006
+select * from tdeclickhistory_demo5 where studentlast3='007' and studentid=1455007
+select * from tdeclickhistory_demo5 where studentlast3='008' and studentid=673008

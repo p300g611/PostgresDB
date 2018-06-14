@@ -1,0 +1,22 @@
+{
+  "name": "barman_client",
+  "description": "Override pg settings for barman backup",
+  "json_class": "Chef::Role",
+  "default_attributes": {
+  },
+  "override_attributes": {
+    "postgresql": {
+      "config": {
+        "wal_level": "replica",
+        "max_wal_senders": 2,
+        "max_replication_slots": 2,
+        "archive_mode": "off"
+      }
+    }
+  },
+  "chef_type": "role",
+  "run_list": [
+  ],
+  "env_run_lists": {
+  }
+}

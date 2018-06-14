@@ -1,0 +1,20 @@
+ssh fs.stageku.cete.us
+screen
+sudo -i -u tomcat
+ls /srv/exports/ep-data-store/ > /tmp/list
+sed -i '/datadictionaries/d' /tmp/list
+sed -i '/faq/d' /tmp/list
+sed -i '/itiinstructions/d' /tmp/list
+sed -i '/uploadtemplates/d' /tmp/list
+while read -r line; do echo "deleting $line"; rm -rf "$line"; done < /tmp/list
+
+
+ssh easepap01.stage.east.cete.us# <-- or any server with /srv/ep-data-store mounted
+screen
+sudo -i -u tomcat
+ls /srv/ep-data-store/ > /tmp/list
+sed -i '/datadictionaries/d' /tmp/list
+sed -i '/faq/d' /tmp/list
+sed -i '/itiinstructions/d' /tmp/list
+sed -i '/uploadtemplates/d' /tmp/list
+while read -r line; do echo "deleting $line"; rm -rf "$line"; done < /tmp/list

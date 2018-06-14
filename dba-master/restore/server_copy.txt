@@ -1,0 +1,17 @@
+ssh -A host.stage.cete.us
+
+######run below command as you user123@host.stage
+
+--on permise
+
+rsync -avz -P -e "ssh" --rsync-path="sudo rsync" /srv/pg_data/tmp/ep_globals_stage-yyyymmdd.sqlc host.stage.cete.us:/srv/pg_data/tmp/
+
+scp /srv/pg_data/tmp/ep_globals_stage-yyyymmdd.sqlc  user123@host.stage.cete.us:/srv/pg_data/tmp/
+
+--on premises to AWS 
+
+scp -o Proxycommand='ssh -W %h:%p bastion-east2.cete.us' /srv/pg_data/tmp/ep_globals_stage-yyyymmdd.sqlc dbutil.mgmt.east.cete.us:/srv/aai_backup_data/upload/
+
+--on AWS to on-premises
+
+scp -o Proxycommand='ssh -W %h:%p bastion-east2.cete.us' dbutil.mgmt.east.cete.us:/srv/aai_backup_data/upload/ /srv/pg_data/tmp/ep_globals_stage-yyyymmdd.sqlc 

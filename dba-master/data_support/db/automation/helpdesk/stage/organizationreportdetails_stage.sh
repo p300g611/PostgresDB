@@ -1,0 +1,3 @@
+psql -h aartdb-stage.c4d5gwuuaeq5.us-east-1.rds.amazonaws.com -U aart_user -f "/srv/extracts/helpdesk/automation/refresh_organization_detail.sql" -d aartstage 
+psql -h aartdb-stage.c4d5gwuuaeq5.us-east-1.rds.amazonaws.com -U aart_user -f "/srv/extracts/helpdesk/automation/stage/organizationreportdetails_aart.sql" -d aartstage 
+psql -h aartauditdb-stage.c4d5gwuuaeq5.us-east-1.rds.amazonaws.com -U aart_user -f "/srv/extracts/helpdesk/automation/stage/organizationreportdetails_audit.sql" -d aartauditstage 

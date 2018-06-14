@@ -1,0 +1,9 @@
+
+#chef client run 
+sudo chef-client
+
+#For turnoff 
+sudo poweroff
+
+#For restart
+sudo reboot
